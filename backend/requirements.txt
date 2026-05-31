@@ -1,8 +1,14 @@
 fastapi
 uvicorn
+groq
+python-dotenv
+python-multipart
+reportlab
+pypdf
 langchain
 openai
 faiss-cpu
-pypdf
-python-multipart
 sentence-transformers
+pillow
+pytesseract
+pdf2image
