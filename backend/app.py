@@ -272,16 +272,17 @@ Provide response in this format:
 
             }
     
+    
         
     
     except Exception as e:
 
         print("\nERROR:", str(e))
 
-    return {
-        "medical_analysis":
-        f"Error analyzing report: {str(e)}"
-    }
+        return {
+            "medical_analysis":
+            f"Error analyzing report: {str(e)}"
+        }
 
     
 
