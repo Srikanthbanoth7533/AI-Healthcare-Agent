@@ -61,7 +61,7 @@ function App() {
     try {
 
       const response = await fetch(
-        "http://127.0.0.1:8000/chat",
+        "https://ai-healthcare-agent-eje2.onrender.com/chat",
         {
           method: "POST",
 
@@ -167,7 +167,7 @@ function App() {
     try {
 
       const response = await fetch(
-        "http://127.0.0.1:8000/analyze-report/",
+        "https://ai-healthcare-agent-eje2.onrender.com/analyze-report/",
         {
           method: "POST",
           body: formData,
@@ -217,7 +217,7 @@ function App() {
   try {
 
     const response = await fetch(
-      "http://127.0.0.1:8000/generate-pdf/",
+      "https://ai-healthcare-agent-eje2.onrender.com/generate-pdf/",
       {
         method: "POST",
       }
@@ -255,7 +255,7 @@ const predictDisease = async () => {
   try {
 
     const response = await fetch(
-      "http://127.0.0.1:8000/predict-disease",
+      "https://ai-healthcare-agent-eje2.onrender.com/predict-disease",
       {
         method: "POST",
         headers: {
@@ -279,7 +279,7 @@ const predictDisease = async () => {
         type: "ai",
         text: data.prediction,
       },
-    ]);
+    ]);       
 
   } catch (error) {
 
