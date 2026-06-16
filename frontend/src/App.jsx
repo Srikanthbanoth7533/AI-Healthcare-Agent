@@ -4,6 +4,10 @@ import {
   useState
 } from "react";
 
+const API_BASE_URL = import.meta.env.DEV
+  ? "http://127.0.0.1:8000"
+  : "https://ai-healthcare-agent-eje2.onrender.com";
+
 function App() {
 
   const [message, setMessage] = useState("");
@@ -61,7 +65,7 @@ function App() {
     try {
 
       const response = await fetch(
-        "https://ai-healthcare-agent-eje2.onrender.com/chat",
+        `${API_BASE_URL}/chat`,
         {
           method: "POST",
 
@@ -167,7 +171,7 @@ function App() {
     try {
 
       const response = await fetch(
-        "https://ai-healthcare-agent-eje2.onrender.com/analyze-report/",
+        `${API_BASE_URL}/analyze-report/`,
         {
           method: "POST",
           body: formData,
@@ -217,7 +221,7 @@ function App() {
   try {
 
     const response = await fetch(
-      "https://ai-healthcare-agent-eje2.onrender.com/generate-pdf/",
+      `${API_BASE_URL}/generate-pdf/`,
       {
         method: "POST",
       }
@@ -255,7 +259,7 @@ const predictDisease = async () => {
   try {
 
     const response = await fetch(
-      "https://ai-healthcare-agent-eje2.onrender.com/predict-disease",
+      `${API_BASE_URL}/predict-disease`,
       {
         method: "POST",
         headers: {
