@@ -2,7 +2,7 @@ services:
   - type: web
     name: ai-healthcare-backend
     env: docker
-    dockerFilePath: Dockerfile
+    dockerfile: Dockerfile
     rootDir: backend
     plan: free
     envVars:
