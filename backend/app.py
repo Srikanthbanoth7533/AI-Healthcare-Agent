@@ -18,6 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 
 import os
+import platform
 import uuid
 
 # =========================
@@ -62,12 +63,19 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # =========================
-# TESSERACT PATH
+# TESSERACT & POPPLER PATHS
 # =========================
 
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
+is_windows = platform.system() == "Windows"
+
+if is_windows:
+    pytesseract.pytesseract.tesseract_cmd = (
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    )
+    POPPLER_PATH = r"C:\poppler\Library\bin"
+else:
+    # On Render/Linux, they are installed globally in system PATH
+    POPPLER_PATH = None
 
 # =========================
 # REQUEST MODEL
@@ -172,11 +180,17 @@ async def analyze_report(file: UploadFile = File(...)):
 
         extracted_text = ""
 
-        pages = convert_from_path(
-            file_path,
-            dpi=300,
-            poppler_path=r"C:\poppler\Library\bin"
-        )
+        if POPPLER_PATH:
+            pages = convert_from_path(
+                file_path,
+                dpi=300,
+                poppler_path=POPPLER_PATH
+            )
+        else:
+            pages = convert_from_path(
+                file_path,
+                dpi=300
+            )
 
         print(f"\nTotal Pages: {len(pages)}")
 
@@ -209,6 +223,16 @@ async def analyze_report(file: UploadFile = File(...)):
                 "Please upload a clearer scan."
             }
 
+        # Remove duplicate newlines and spaces to compress token usage
+        import re
+        cleaned_text = re.sub(r'\n+', '\n', extracted_text)
+        cleaned_text = re.sub(r' {2,}', ' ', cleaned_text)
+        cleaned_text = cleaned_text.strip()
+
+        # Limit text length to avoid Groq's 6,000 TPM rate limit (8000 chars is ~1500-2000 tokens)
+        if len(cleaned_text) > 8000:
+            cleaned_text = cleaned_text[:8000] + "\n\n[Report content truncated due to size limits]..."
+
         # =========================
         # AI ANALYSIS
         # =========================
@@ -240,7 +264,7 @@ Analyze this medical report carefully.
 
 MEDICAL REPORT:
 
-{extracted_text}
+{cleaned_text}
 
 Provide response in this format:
 
@@ -386,7 +410,7 @@ async def predict_disease(request: DiseaseRequest):
                     "3. Diet suggestions\n"
                     "4. Precautions\n"
                     "5. Lifestyle recommendations\n"
-                    "Do not prescribe medicines."
+                    "6. prescribe medicines."
                 )
             },
             {
@@ -400,3 +424,66 @@ async def predict_disease(request: DiseaseRequest):
         "prediction":
         response.choices[0].message.content
     }
+
+
+@app.post("/predict-image")
+async def predict_image(file: UploadFile = File(...)):
+    try:
+        allowed_extensions = {".jpg", ".jpeg", ".png", ".webp"}
+        _, ext = os.path.splitext(file.filename.lower())
+        if ext not in allowed_extensions:
+            return {
+                "analysis": "Please upload only image files (JPG, JPEG, PNG, WEBP)."
+            }
+
+        contents = await file.read()
+        
+        import base64
+        base64_image = base64.b64encode(contents).decode("utf-8")
+        
+        response = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an expert AI dermatological and wound analysis assistant. "
+                        "Analyze the skin or wound image carefully. Identify signs of infection, scars, wounds, rashes, or other conditions. "
+                        "Provide a structured analysis:\n"
+                        "1. Visual Findings (describe the lesion, rash, wound, or scar)\n"
+                        "2. Possible Condition or Risks (explain potential causes, but explain this is a preliminary check)\n"
+                        "3. First-Aid & Immediate Care (basic hygiene, wound dressing, cleaning, or hydration)\n"
+                        "4. Precautions & Things to Avoid (e.g. scratching, picking, applying certain irritants)\n"
+                        "5. Lifestyle & Prevention (nutrition, hygiene, skin protection)\n"
+                        "6. Red Flag Symptoms (when to seek immediate emergency care)\n"
+                        "7. Doctor Consultation Advice.\n"
+                        "Never prescribe prescription medications or guarantee a final medical diagnosis."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Analyze this skin/wound image carefully and provide the structured report."
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        }
+                    ]
+                }
+            ]
+        )
+        
+        return {
+            "analysis": response.choices[0].message.content
+        }
+        
+    except Exception as e:
+        print("\nIMAGE ANALYSIS ERROR:", str(e))
+        return {
+            "analysis": f"Error analyzing image: {str(e)}"
+        }

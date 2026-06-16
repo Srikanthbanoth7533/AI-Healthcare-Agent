@@ -7,10 +7,183 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
     <title>🩺 AI Healthcare Assistant</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="app-container">
+      
+      <!-- ==========================================
+          LEFT COLLAPSIBLE SIDEBAR
+         ========================================== -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-top">
+          
+          <!-- Hamburger Menu & Brand Title -->
+          <div class="brand-container">
+            <div id="brand-info" class="brand-title">
+              <svg class="spark-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C12 2 12 8 8 12C12 16 12 22 12 22C12 22 12 16 16 12C12 8 12 2 12 2Z" fill="url(#spark-grad-sidebar)" />
+                <defs>
+                  <linearGradient id="spark-grad-sidebar" x1="8" y1="2" x2="16" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#4285f4" />
+                    <stop offset="40%" stop-color="#9b72cb" />
+                    <stop offset="100%" stop-color="#d96570" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span class="brand-text">AI Doctor</span>
+            </div>
+            <button id="toggle-sidebar-btn" class="hamburger-btn" title="Toggle Sidebar">
+              <svg class="hamburger-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- New Chat Button -->
+          <button id="new-chat-btn" class="new-chat-btn" title="New Conversation">
+            <svg class="plus-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span class="new-chat-text">New Chat</span>
+          </button>
+
+          <!-- Recent Section -->
+          <div id="recent-section" class="recent-section">
+            <span class="recent-label">RECENT</span>
+            <div id="recent-list" class="recent-list">
+              <!-- Dynamically populated or 'No recent chats' -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+          <a href="#" class="footer-link" title="Help">
+            <svg class="footer-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="footer-link-text">Help</span>
+          </a>
+          <a href="#" class="footer-link" title="Activity">
+            <svg class="footer-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="footer-link-text">Activity</span>
+          </a>
+          <a href="#" class="footer-link" title="Settings">
+            <svg class="footer-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="footer-link-text">Settings</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- ==========================================
+          MAIN CONTENT CONTAINER
+         ========================================== -->
+      <main class="main-content">
+        
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+          <div class="header-left">
+            <h1 class="app-header-title">
+              🩺 AI Healthcare Assistant
+            </h1>
+          </div>
+          <!-- Mock User Avatar -->
+          <div class="user-avatar">
+            HB
+          </div>
+        </header>
+
+        <!-- ==========================================
+            CHAT FEED AREA
+           ========================================== -->
+        <div id="chat-feed" class="chat-feed">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- ==========================================
+            FLOATING CAPSULE INPUT SYSTEM
+           ========================================== -->
+        <div class="input-wrapper">
+          <div class="input-inner">
+            
+            <!-- Display Selected File badge prior to upload -->
+            <div id="file-badge" class="file-badge hidden">
+              <span id="file-badge-name">📄 report.pdf</span>
+              <button id="remove-file-btn" class="remove-file-btn" title="Remove file">✕</button>
+            </div>
+
+            <!-- Input Capsule -->
+            <div class="input-capsule">
+              
+              <!-- Attachment File Input -->
+              <label class="attachment-label" title="Attach Pathology PDF or Skin/Wound Image">
+                <svg class="attachment-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                <input type="file" id="file-input" accept=".pdf, image/*" class="hidden" />
+              </label>
+
+              <!-- Text Input -->
+              <input
+                type="text"
+                id="chat-input"
+                placeholder="Ask a healthcare question, details on symptoms, or attach a report..."
+                class="chat-input"
+              />
+
+              <!-- Action Toolbar -->
+              <div class="toolbar">
+                
+                <!-- Voice Input -->
+                <button id="voice-input-btn" class="voice-btn" title="Voice Input">
+                  <svg id="mic-icon" class="mic-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </button>
+
+                <!-- Stethoscope (Predict Disease) -->
+                <button id="predict-disease-btn" class="stethoscope-btn disabled" title="Check Symptoms (Predict Disease)" disabled>
+                  <svg class="stethoscope-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+
+                <!-- PDF Download (Active when report history exists) -->
+                <button id="download-report-btn" class="download-btn hidden" title="Download Pathology Analysis Report">
+                  <svg class="download-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+
+                <!-- Send/Submit -->
+                <button id="send-msg-btn" class="send-btn disabled" title="Send Message" disabled>
+                  <svg class="send-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+
+              </div>
+
+            </div>
+
+            <!-- Disclaimer Caption -->
+            <p class="disclaimer">
+              AI Healthcare Assistant is an AI tool. Checkups & recommendations should always be validated with a qualified medical professional.
+            </p>
+
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+    <script type="module" src="/src/script.js"></script>
   </body>
 </html>
