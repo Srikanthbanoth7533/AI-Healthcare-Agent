@@ -92,7 +92,7 @@ class ChatRequest(BaseModel):
 def home():
 
     return {
-        "message": "AI Healthcare Assistant Running Successfully"
+        "message": "Siri Healthcare Agent Running Successfully"
     }
 
 # =========================
@@ -113,7 +113,7 @@ def healthcare_chat(request: ChatRequest):
                 {
                     "role": "system",
                     "content": (
-                        "You are an advanced AI Healthcare Assistant. "
+                        "You are Siri Healthcare Agent, an advanced AI Healthcare Assistant. "
                         "Provide safe and professional healthcare advice. "
                         "Do not prescribe dangerous medicines. "
                         "Suggest healthy lifestyle improvements."
@@ -365,7 +365,7 @@ async def generate_pdf():
     content = [
 
         Paragraph(
-            "AI Healthcare Report",
+            "Siri Healthcare Report",
             styles["Title"]
         ),
 
@@ -384,7 +384,7 @@ async def generate_pdf():
     return FileResponse(
         pdf_file,
         media_type="application/pdf",
-        filename="AI_Report.pdf"
+        filename="Siri_Healthcare_Report.pdf"
     )
 # ==========================
 # DISEASE PREDICTION

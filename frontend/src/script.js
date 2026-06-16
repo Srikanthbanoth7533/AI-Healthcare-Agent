@@ -267,7 +267,7 @@ function renderChats() {
               ${sparkIconSvg}
             </div>
             <div class="ai-bubble-content">
-              <div class="ai-bubble-label">AI Doctor</div>
+              <div class="ai-bubble-label">Siri Healthcare Agent</div>
               <div class="ai-formatted-text">${formatMarkdown(chat.text)}</div>
             </div>
           </div>
@@ -528,7 +528,7 @@ async function downloadPDF() {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "AI_Healthcare_Report.pdf";
+    link.download = "Siri_Healthcare_Report.pdf";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
