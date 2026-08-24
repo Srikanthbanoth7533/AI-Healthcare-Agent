@@ -106,7 +106,7 @@ def healthcare_chat(request: ChatRequest):
 
         response = client.chat.completions.create(
 
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
 
             messages=[
 
@@ -239,7 +239,7 @@ async def analyze_report(file: UploadFile = File(...)):
 
         response = client.chat.completions.create(
 
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
 
             messages=[
 
@@ -321,7 +321,7 @@ def ai_test():
 
         response = client.chat.completions.create(
 
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
 
             messages=[
 
@@ -398,7 +398,7 @@ class DiseaseRequest(BaseModel):
 async def predict_disease(request: DiseaseRequest):
 
     response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
         messages=[
             {
                 "role": "system",
@@ -442,7 +442,7 @@ async def predict_image(file: UploadFile = File(...)):
         base64_image = base64.b64encode(contents).decode("utf-8")
         
         response = client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            model="llama-3.2-11b-vision-preview",
             messages=[
                 {
                     "role": "system",
