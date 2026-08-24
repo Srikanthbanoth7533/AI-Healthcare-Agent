@@ -106,7 +106,7 @@ def healthcare_chat(request: ChatRequest):
 
         response = client.chat.completions.create(
 
-            model="llama-3.3-70b-versatile",
+            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
 
             messages=[
 
@@ -239,7 +239,7 @@ async def analyze_report(file: UploadFile = File(...)):
 
         response = client.chat.completions.create(
 
-            model="llama-3.3-70b-versatile",
+            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
 
             messages=[
 
@@ -321,7 +321,7 @@ def ai_test():
 
         response = client.chat.completions.create(
 
-            model="llama-3.3-70b-versatile",
+            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
 
             messages=[
 
@@ -398,7 +398,7 @@ class DiseaseRequest(BaseModel):
 async def predict_disease(request: DiseaseRequest):
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
         messages=[
             {
                 "role": "system",
@@ -486,4 +486,4 @@ async def predict_image(file: UploadFile = File(...)):
         print("\nIMAGE ANALYSIS ERROR:", str(e))
         return {
             "analysis": f"Error analyzing image: {str(e)}"
-        }
+        }
