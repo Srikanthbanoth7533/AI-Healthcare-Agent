@@ -70,7 +70,7 @@ Siri Healthcare Agent delivers instant educational health guidance, symptom tria
 
 | Security Domain | Implementation Details |
 |---|---|
-| **Authentication** | Ephemeral HMAC-SHA256 session tokens with 2-hour sliding expiry and client IP binding via `POST /auth/session`, plus `X-API-Key` header support for programmatic consumers. |
+| **Authentication** | Signed HMAC-SHA256 ephemeral session tokens with 2-hour session expiration via `POST /auth/session`, plus `X-API-Key` header support for programmatic consumers. |
 | **CORS Restriction** | Strict domain allowlist (`ALLOWED_ORIGINS`). Public wildcard (`*`) access is explicitly blocked. |
 | **Upload Security** | Pre-flight client checks + 10MB chunked backend stream enforcement (`HTTP 413`). Mandatory magic-byte signature validation (`%PDF-`, JPEG, PNG, WEBP). Sanitized UUID filenames inside auto-purging temporary directories. |
 | **Rate Limiting** | Custom sliding-window rate limiter per client IP with `HTTP 429` enforcement and `Retry-After` headers. |
@@ -136,13 +136,13 @@ All protected endpoints require either an ephemeral session token (`Authorizatio
 |---|---|:---:|---|
 | `GET` | `/` | No | Root endpoint (Serves SPA to browsers, JSON to API clients). |
 | `GET` | `/health` | No | Service liveness and health status. |
-| `POST` | `/auth/session` | No | Generates an ephemeral HMAC-SHA256 signed session token. |
+| `POST` | `/auth/session` | No | Generates a signed HMAC-SHA256 session token (2-hour expiration). |
 | `POST` | `/chat` | **Yes** | General healthcare assistant chat inquiry. |
 | `POST` | `/predict-disease` | **Yes** | Structured symptom evaluation and triage risk guidance. |
-| `POST` | `/upload-medical-document` | **Yes** | Extracts and analyzes laboratory or clinical PDF reports. |
+| `POST` | `/analyze-report/` | **Yes** | Extracts and analyzes laboratory or clinical PDF reports via text extraction/OCR. |
 | `POST` | `/predict-image` | **Yes** | Multimodal visual assessment of skin, wounds, or reports. |
-| `POST` | `/download-report` | **Yes** | Generates an isolated PDF report in memory for download. |
-| `POST` | `/ai-test` | **Yes** | Diagnostics probe verifying live Groq LLM connectivity. |
+| `POST` | `/generate-pdf/` | **Yes** | Generates an isolated PDF report in memory for download. |
+| `GET` | `/ai-test` | **Yes** | Diagnostics probe verifying live Groq LLM connectivity. |
 
 ---
 
@@ -188,6 +188,8 @@ GROQ_API_KEY="your-groq-api-key-here"
 APP_SECRET_KEY="replace-with-a-random-secret-key-for-session-tokens"
 APP_API_KEY="" # Optional static API key for programmatic access
 ALLOWED_ORIGINS="http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:8000"
+GROQ_MODEL="llama-3.3-70b-versatile" # Optional model override
+GROQ_VISION_MODEL="llama-3.2-11b-vision-preview" # Optional vision model override
 PORT=8000
 ```
 
@@ -214,10 +216,10 @@ Visit `http://localhost:5173` in your browser.
 
 ## 🧪 Testing & Quality Assurance
 
-The repository includes a comprehensive automated test suite covering authentication, session lifecycles, input bounds, security edge cases, file signatures, and prompt injection attempts.
+The repository currently contains 38 automated tests covering authentication, session lifecycles, input bounds, security edge cases, file signatures, and prompt injection attempts.
 
 ```bash
-# Run backend test suite (38 automated tests)
+# Run backend test suite
 cd backend
 python -m pytest tests/ -v
 
