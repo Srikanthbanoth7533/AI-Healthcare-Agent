@@ -1,4 +1,10 @@
 {
+  "name": "ai-healthcare-agent-root",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint"
+  },
   "devDependencies": {
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.14",
