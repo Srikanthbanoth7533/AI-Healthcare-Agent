@@ -2,12 +2,13 @@
   "name": "ai-healthcare-agent-root",
   "private": true,
   "scripts": {
-    "build": "npm --prefix frontend run build",
+    "build": "node scripts/build.js",
     "lint": "npm --prefix frontend run lint"
   },
   "devDependencies": {
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.14",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "vite": "^6.2.0"
   }
 }

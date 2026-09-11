@@ -25,7 +25,9 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.security.api_key import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
 from groq import Groq, GroqError
 from pdf2image import convert_from_path
 from pydantic import BaseModel, Field
@@ -65,7 +67,7 @@ MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB limit for PDF and image uploads
 
 RAW_ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:8000,https://siri-healthcare-agent.vercel.app",
+    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:8000,https://siri-healthcare-agent.vercel.app,https://ai-healthcare-agent.vercel.app",
 )
 ALLOWED_ORIGINS = [origin.strip() for origin in RAW_ALLOWED_ORIGINS.split(",") if origin.strip()]
 
@@ -350,7 +352,10 @@ def validate_image_signature(data: bytes) -> str:
 
 
 @app.get("/")
-def home():
+def home(request: Request):
+    static_index = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if os.path.exists(static_index) and "text/html" in request.headers.get("accept", ""):
+        return FileResponse(static_index)
     return {"message": "Siri Healthcare Agent Running Successfully"}
 
 
@@ -707,3 +712,31 @@ async def predict_image(
             status_code=500,
             detail="An error occurred while analyzing the image. Please try again later.",
         ) from None
+
+
+# ==========================================
+# STATIC FILES SERVING (PRODUCTION SPA)
+# ==========================================
+
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    assets_dir = os.path.join(static_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+
+@app.get("/favicon.svg")
+def favicon():
+    fav = os.path.join(os.path.dirname(__file__), "static", "favicon.svg")
+    if os.path.exists(fav):
+        return FileResponse(fav)
+    raise HTTPException(status_code=404, detail="Favicon not found")
+
+
+@app.get("/icons.svg")
+def icons():
+    icon_file = os.path.join(os.path.dirname(__file__), "static", "icons.svg")
+    if os.path.exists(icon_file):
+        return FileResponse(icon_file)
+    raise HTTPException(status_code=404, detail="Icons not found")
+
