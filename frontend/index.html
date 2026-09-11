@@ -60,19 +60,19 @@
 
         <!-- Sidebar Footer -->
         <div class="sidebar-footer">
-          <a href="#" class="footer-link" title="Help">
+          <a href="#" id="help-link" class="footer-link" title="Help & Support">
             <svg class="footer-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span class="footer-link-text">Help</span>
           </a>
-          <a href="#" class="footer-link" title="Activity">
+          <a href="#" id="activity-link" class="footer-link" title="Session Activity">
             <svg class="footer-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span class="footer-link-text">Activity</span>
           </a>
-          <a href="#" class="footer-link" title="Settings">
+          <a href="#" id="settings-link" class="footer-link" title="Application Settings">
             <svg class="footer-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -90,12 +90,17 @@
         <!-- Top Navbar -->
         <header class="top-navbar">
           <div class="header-left">
+            <button id="mobile-menu-btn" class="mobile-menu-btn" title="Open Navigation Menu">
+              <svg class="hamburger-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <h1 class="app-header-title">
               🩺 Siri Healthcare Agent
             </h1>
           </div>
-          <!-- Mock User Avatar -->
-          <div class="user-avatar">
+          <!-- User Profile / Settings Avatar -->
+          <div id="user-profile-btn" class="user-avatar" title="Account & Settings">
             HB
           </div>
         </header>
@@ -184,6 +189,23 @@
       </main>
 
     </div>
+
+    <!-- Sidebar Backdrop for Mobile -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop hidden"></div>
+
+    <!-- Modal Container (Help, Settings, Activity) -->
+    <div id="app-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="modal-title" class="modal-title">Information</h3>
+          <button id="modal-close-btn" class="modal-close-btn" title="Close modal">✕</button>
+        </div>
+        <div id="modal-body" class="modal-body">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="/src/script.js"></script>
   </body>
 </html>
