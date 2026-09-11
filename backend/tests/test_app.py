@@ -2,6 +2,10 @@ import asyncio
 import os
 from unittest.mock import MagicMock, patch
 
+# Ensure test isolation without external secret dependencies
+os.environ.setdefault("GROQ_API_KEY", "mock-test-key-for-test-isolation")
+os.environ.setdefault("APP_SECRET_KEY", "ci-test-secret-key-32-characters-test")
+
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image

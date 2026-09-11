@@ -53,6 +53,9 @@ load_dotenv()
 # ==========================================
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    logger.warning("GROQ_API_KEY is not set. External AI calls will require valid configuration.")
+
 APP_API_KEY = os.getenv("APP_API_KEY")
 APP_SECRET_KEY = os.getenv("APP_SECRET_KEY", "default-insecure-secret-key-change-in-prod")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
@@ -70,7 +73,7 @@ ALLOWED_ORIGINS = [origin.strip() for origin in RAW_ALLOWED_ORIGINS.split(",") i
 # GROQ CLIENT
 # ==========================================
 
-client = Groq(api_key=GROQ_API_KEY)
+client = Groq(api_key=GROQ_API_KEY or "placeholder-key-for-import-and-mocked-testing")
 
 # ==========================================
 # FASTAPI APP INITIALIZATION

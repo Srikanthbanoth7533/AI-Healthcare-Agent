@@ -39,6 +39,9 @@ jobs:
 
       - name: Run Pytest Test Suite
         working-directory: backend
+        env:
+          GROQ_API_KEY: "gsk_ci_mock_test_key_for_testing"
+          APP_SECRET_KEY: "ci-test-secret-key-32-characters-test"
         run: pytest tests/ -v
 
   frontend-ci:
