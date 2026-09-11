@@ -1,25 +1,21 @@
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, UploadFile, File
-from pydantic import BaseModel
-
-from dotenv import load_dotenv
-from groq import Groq
-from pydantic import BaseModel
-
-from pdf2image import convert_from_path
-import pytesseract
-
-from PIL import Image
-
-from fastapi.responses import FileResponse
-from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
-
-
-
+import asyncio
+import base64
 import os
 import platform
+import re
 import uuid
+from typing import Annotated
+
+import pytesseract
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from groq import Groq, GroqError
+from pdf2image import convert_from_path
+from pydantic import BaseModel
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate
 
 # =========================
 # LOAD ENV VARIABLES
@@ -81,35 +77,34 @@ else:
 # REQUEST MODEL
 # =========================
 
+
 class ChatRequest(BaseModel):
     message: str
+
 
 # =========================
 # HOME ROUTE
 # =========================
 
+
 @app.get("/")
 def home():
-
     return {
         "message": "Siri Healthcare Agent Running Successfully"
     }
+
 
 # =========================
 # CHAT API
 # =========================
 
+
 @app.post("/chat")
 def healthcare_chat(request: ChatRequest):
-
     try:
-
         response = client.chat.completions.create(
-
             model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
-
             messages=[
-
                 {
                     "role": "system",
                     "content": (
@@ -117,46 +112,45 @@ def healthcare_chat(request: ChatRequest):
                         "Provide safe and professional healthcare advice. "
                         "Do not prescribe dangerous medicines. "
                         "Suggest healthy lifestyle improvements."
-                    )
+                    ),
                 },
-
                 {
                     "role": "user",
-                    "content": request.message
-                }
-
-            ]
-
+                    "content": request.message,
+                },
+            ],
         )
 
         return {
             "reply": response.choices[0].message.content
         }
 
-    except Exception as e:
-
+    except (GroqError, OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError) as e:
         return {
-            "reply": f"Error: {str(e)}"
+            "reply": f"Error: {e}"
         }
+
 
 # =========================
 # PDF ANALYSIS ROUTE
 # =========================
 
+
+def _save_upload_file(path: str, data: bytes) -> None:
+    with open(path, "wb") as f:
+        f.write(data)
+
+
 @app.post("/analyze-report/")
-async def analyze_report(file: UploadFile = File(...)):
-
+async def analyze_report(file: Annotated[UploadFile, File()]):
     try:
-
         # =========================
         # FILE VALIDATION
         # =========================
 
         if not file.filename.endswith(".pdf"):
-
             return {
-                "medical_analysis":
-                "Please upload only PDF files."
+                "medical_analysis": "Please upload only PDF files."
             }
 
         # =========================
@@ -167,12 +161,11 @@ async def analyze_report(file: UploadFile = File(...)):
 
         file_path = os.path.join(
             UPLOAD_FOLDER,
-            unique_name
+            unique_name,
         )
 
-        with open(file_path, "wb") as f:
-
-            f.write(await file.read())
+        file_bytes = await file.read()
+        await asyncio.to_thread(_save_upload_file, file_path, file_bytes)
 
         # =========================
         # OCR EXTRACTION
@@ -184,25 +177,24 @@ async def analyze_report(file: UploadFile = File(...)):
             pages = convert_from_path(
                 file_path,
                 dpi=300,
-                poppler_path=POPPLER_PATH
+                poppler_path=POPPLER_PATH,
             )
         else:
             pages = convert_from_path(
                 file_path,
-                dpi=300
+                dpi=300,
             )
 
         print(f"\nTotal Pages: {len(pages)}")
 
         for index, page in enumerate(pages):
-
             # Convert image to RGB
             page = page.convert("RGB")
 
             # OCR
             text = pytesseract.image_to_string(
                 page,
-                config="--psm 6"
+                config="--psm 6",
             )
 
             print(f"\n===== PAGE {index + 1} =====\n")
@@ -216,33 +208,32 @@ async def analyze_report(file: UploadFile = File(...)):
         # =========================
 
         if len(extracted_text.strip()) < 50:
-
             return {
-                "medical_analysis":
-                "Unable to extract readable text from report. "
-                "Please upload a clearer scan."
+                "medical_analysis": (
+                    "Unable to extract readable text from report. "
+                    "Please upload a clearer scan."
+                )
             }
 
         # Remove duplicate newlines and spaces to compress token usage
-        import re
-        cleaned_text = re.sub(r'\n+', '\n', extracted_text)
-        cleaned_text = re.sub(r' {2,}', ' ', cleaned_text)
+        cleaned_text = re.sub(r"\n+", "\n", extracted_text)
+        cleaned_text = re.sub(r" {2,}", " ", cleaned_text)
         cleaned_text = cleaned_text.strip()
 
         # Limit text length to avoid Groq's 6,000 TPM rate limit (8000 chars is ~1500-2000 tokens)
         if len(cleaned_text) > 8000:
-            cleaned_text = cleaned_text[:8000] + "\n\n[Report content truncated due to size limits]..."
+            cleaned_text = (
+                cleaned_text[:8000]
+                + "\n\n[Report content truncated due to size limits]..."
+            )
 
         # =========================
         # AI ANALYSIS
         # =========================
 
         response = client.chat.completions.create(
-
             model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
-
             messages=[
-
                 {
                     "role": "system",
                     "content": (
@@ -253,9 +244,8 @@ async def analyze_report(file: UploadFile = File(...)):
                         "Suggest diet improvements, hydration, exercise, "
                         "lifestyle changes, and precautions. "
                         "Never prescribe dangerous medicines."
-                    )
+                    ),
                 },
-
                 {
                     "role": "user",
                     "content": f"""
@@ -276,86 +266,58 @@ Provide response in this format:
 6. Precautions
 7. Doctor Consultation Advice
 
-"""
-                }
-
-            ]
-
+""",
+                },
+            ],
         )
         global latest_report_content
 
         final_response = response.choices[0].message.content
 
         latest_report_content = final_response
-        
-    
 
         return {
-
             "medical_analysis": final_response
+        }
 
-            }
-    
-    
-        
-    
-    except Exception as e:
-
+    except (GroqError, OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError) as e:
         print("\nERROR:", str(e))
 
         return {
-            "medical_analysis":
-            f"Error analyzing report: {str(e)}"
+            "medical_analysis": f"Error analyzing report: {e}"
         }
 
-    
 
 # =========================
 # AI TEST
 # =========================
 
+
 @app.get("/ai-test")
 def ai_test():
-
     try:
-
         response = client.chat.completions.create(
-
             model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
-
             messages=[
-
                 {
                     "role": "user",
-                    "content":
-                    "Give 5 health tips for students."
+                    "content": "Give 5 health tips for students.",
                 }
-
-            ]
-
+            ],
         )
 
         return {
-            "response":
-            response.choices[0].message.content
+            "response": response.choices[0].message.content
         }
 
-    except Exception as e:
-
+    except (GroqError, OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError) as e:
         return {
-            "response":
-            f"Error: {str(e)}"
+            "response": f"Error: {e}"
         }
-
-from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
 
 
 @app.post("/generate-pdf/")
 async def generate_pdf():
-
-    global latest_report_content
-
     pdf_file = "AI_Report.pdf"
 
     doc = SimpleDocTemplate(pdf_file)
@@ -363,20 +325,17 @@ async def generate_pdf():
     styles = getSampleStyleSheet()
 
     content = [
-
         Paragraph(
             "Siri Healthcare Report",
-            styles["Title"]
+            styles["Title"],
         ),
-
         Paragraph(
             latest_report_content.replace(
                 "\n",
-                "<br/>"
+                "<br/>",
             ),
-            styles["BodyText"]
+            styles["BodyText"],
         ),
-
     ]
 
     doc.build(content)
@@ -384,11 +343,14 @@ async def generate_pdf():
     return FileResponse(
         pdf_file,
         media_type="application/pdf",
-        filename="Siri_Healthcare_Report.pdf"
+        filename="Siri_Healthcare_Report.pdf",
     )
+
+
 # ==========================
 # DISEASE PREDICTION
 # ==========================
+
 
 class DiseaseRequest(BaseModel):
     symptoms: str
@@ -396,7 +358,6 @@ class DiseaseRequest(BaseModel):
 
 @app.post("/predict-disease")
 async def predict_disease(request: DiseaseRequest):
-
     response = client.chat.completions.create(
         model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
         messages=[
@@ -411,23 +372,22 @@ async def predict_disease(request: DiseaseRequest):
                     "4. Precautions\n"
                     "5. Lifestyle recommendations\n"
                     "6. prescribe medicines."
-                )
+                ),
             },
             {
                 "role": "user",
-                "content": f"Symptoms: {request.symptoms}"
-            }
-        ]
+                "content": f"Symptoms: {request.symptoms}",
+            },
+        ],
     )
 
     return {
-        "prediction":
-        response.choices[0].message.content
+        "prediction": response.choices[0].message.content
     }
 
 
 @app.post("/predict-image")
-async def predict_image(file: UploadFile = File(...)):
+async def predict_image(file: Annotated[UploadFile, File()]):
     try:
         allowed_extensions = {".jpg", ".jpeg", ".png", ".webp"}
         _, ext = os.path.splitext(file.filename.lower())
@@ -437,10 +397,9 @@ async def predict_image(file: UploadFile = File(...)):
             }
 
         contents = await file.read()
-        
-        import base64
+
         base64_image = base64.b64encode(contents).decode("utf-8")
-        
+
         response = client.chat.completions.create(
             model="llama-3.2-11b-vision-preview",
             messages=[
@@ -458,32 +417,32 @@ async def predict_image(file: UploadFile = File(...)):
                         "6. Red Flag Symptoms (when to seek immediate emergency care)\n"
                         "7. Doctor Consultation Advice.\n"
                         "Never prescribe prescription medications or guarantee a final medical diagnosis."
-                    )
+                    ),
                 },
                 {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": "Analyze this skin/wound image carefully and provide the structured report."
+                            "text": "Analyze this skin/wound image carefully and provide the structured report.",
                         },
                         {
                             "type": "image_url",
                             "image_url": {
                                 "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
-            ]
+                            },
+                        },
+                    ],
+                },
+            ],
         )
-        
+
         return {
             "analysis": response.choices[0].message.content
         }
-        
-    except Exception as e:
+
+    except (GroqError, OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError) as e:
         print("\nIMAGE ANALYSIS ERROR:", str(e))
         return {
-            "analysis": f"Error analyzing image: {str(e)}"
+            "analysis": f"Error analyzing image: {e}"
         }
