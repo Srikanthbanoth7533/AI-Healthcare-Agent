@@ -17,7 +17,6 @@ const fileBadge = document.getElementById("file-badge");
 const fileBadgeName = document.getElementById("file-badge-name");
 const removeFileBtn = document.getElementById("remove-file-btn");
 const voiceInputBtn = document.getElementById("voice-input-btn");
-const micIcon = document.getElementById("mic-icon");
 const predictDiseaseBtn = document.getElementById("predict-disease-btn");
 const downloadReportBtn = document.getElementById("download-report-btn");
 const sendMsgBtn = document.getElementById("send-msg-btn");
@@ -30,6 +29,35 @@ let loading = false;
 let isListening = false;
 let sidebarOpen = true;
 let hasReportReady = false;
+let latestAnalysisText = "";
+let cachedSessionToken = null;
+
+// Auth helper: fetches ephemeral session token or uses configured API key
+async function getAuthHeaders() {
+  const headers = {};
+  const staticKey = window.APP_CONFIG?.API_KEY || (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_KEY) || "";
+  if (staticKey) {
+    headers["X-API-Key"] = staticKey;
+    return headers;
+  }
+
+  if (!cachedSessionToken) {
+    try {
+      const authRes = await fetch(`${API_BASE_URL}/auth/session`, { method: "POST" });
+      if (authRes.ok) {
+        const authData = await authRes.json();
+        cachedSessionToken = authData.access_token;
+      }
+    } catch (e) {
+      console.warn("Could not acquire session token:", e);
+    }
+  }
+
+  if (cachedSessionToken) {
+    headers["Authorization"] = `Bearer ${cachedSessionToken}`;
+  }
+  return headers;
+}
 
 // Load initial state from LocalStorage
 try {
@@ -360,15 +388,20 @@ async function sendMessage() {
   renderChats();
 
   try {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
       },
       body: JSON.stringify({ message: userMessage.text }),
     });
 
-    if (!response.ok) throw new Error("API call error");
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || `Server error (${response.status})`);
+    }
     
     const data = await response.json();
     chats.push({
@@ -379,7 +412,7 @@ async function sendMessage() {
     console.error(error);
     chats.push({
       type: "ai",
-      text: "❌ Backend connection failed. Please check if your server is running."
+      text: `❌ ${error.message || "Backend connection failed. Please check if your server is running."}`
     });
   } finally {
     loading = false;
@@ -405,15 +438,20 @@ async function predictDisease() {
   renderChats();
 
   try {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/predict-disease`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
       },
       body: JSON.stringify({ symptoms: symptomsText }),
     });
 
-    if (!response.ok) throw new Error("API Call Error");
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || `Server error (${response.status})`);
+    }
     
     const data = await response.json();
     chats.push({
@@ -424,7 +462,7 @@ async function predictDisease() {
     console.error(error);
     chats.push({
       type: "ai",
-      text: "❌ Prediction failed. Please verify the backend is running."
+      text: `❌ ${error.message || "Prediction failed. Please verify the backend is running."}`
     });
   } finally {
     loading = false;
@@ -449,14 +487,22 @@ async function uploadPDF(file) {
   renderChats();
 
   try {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/analyze-report/`, {
       method: "POST",
+      headers: {
+        ...authHeaders,
+      },
       body: formData,
     });
 
-    if (!response.ok) throw new Error("Upload fail");
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || `Upload failed (${response.status})`);
+    }
 
     const data = await response.json();
+    latestAnalysisText = data.medical_analysis || "";
     chats.push({
       type: "ai",
       text: data.medical_analysis || "No analysis received."
@@ -466,7 +512,7 @@ async function uploadPDF(file) {
     console.error(error);
     chats.push({
       type: "ai",
-      text: "❌ PDF Analysis Failed. Please verify your connection or file content."
+      text: `❌ ${error.message || "PDF Analysis Failed. Please verify your connection or file content."}`
     });
   } finally {
     loading = false;
@@ -491,12 +537,19 @@ async function uploadImage(file) {
   renderChats();
 
   try {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/predict-image`, {
       method: "POST",
+      headers: {
+        ...authHeaders,
+      },
       body: formData,
     });
 
-    if (!response.ok) throw new Error("Upload fail");
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || `Upload failed (${response.status})`);
+    }
 
     const data = await response.json();
     chats.push({
@@ -507,7 +560,7 @@ async function uploadImage(file) {
     console.error(error);
     chats.push({
       type: "ai",
-      text: "❌ Image Analysis Failed. Please check your backend connection."
+      text: `❌ ${error.message || "Image Analysis Failed. Please check your backend connection."}`
     });
   } finally {
     loading = false;
@@ -518,11 +571,20 @@ async function uploadImage(file) {
 
 async function downloadPDF() {
   try {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/generate-pdf/`, {
-      method: "POST"
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+      },
+      body: JSON.stringify({ content: latestAnalysisText || "No report generated yet." }),
     });
 
-    if (!response.ok) throw new Error("PDF generation failed");
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || "PDF generation failed");
+    }
 
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
@@ -535,7 +597,7 @@ async function downloadPDF() {
     window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error(error);
-    alert("Failed to download PDF report. Ensure an analysis has been completed.");
+    alert(`Failed to download PDF report: ${error.message || "Ensure an analysis has been completed."}`);
   }
 }
 
